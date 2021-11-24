@@ -31,15 +31,28 @@ server_socket.bind((server_host, server_port))
 # Set server to listen for connection
 server_socket.listen(1)  # listen for only one connection
 
-# Server loop
+# Accept connection:
+(client_socket, address) = server_socket.accept()
+print("Client socket: ", client_socket, "client address: ", address)
+
 while True:
     # Accept connection:
-    (client_socket, address) = server_socket.accept()
-    print("Client socket, address: ", client_socket, " ", address)
-    #server_received, server_sent, server_other = select.select(
-        #[client_socket], [server_socket], [])
-    server_received = client_socket.recv(1024)
-    print("received information from client: ", server_received.decode('utf-8'))
+    server_received, server_sent, server_other = select.select(
+        [client_socket], [], [])
+    if server_received:  # if there is something waiting to be received by server
+        data_received = client_socket.recv(2048)
+        received_message = data_received.decode('utf-8')
+        print("Message from client: ", received_message)
+        if received_message == "/q":
+            print("Client quits")
+            break
+        print("What is your response to the client?")
+        server_input = input()
+        message = bytes(server_input, 'utf-8')
+        client_socket.send(message)
+
+
+
 
 
 
