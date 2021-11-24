@@ -3,7 +3,9 @@
 # Date: November 23, 2021
 # Description: A client-server chat program using a python socket
 # Works Cited: Python documentation at docs.python.org
+
 """
+
 From out instructions:
 
 Server
@@ -25,12 +27,5 @@ Client
 6. The client prints the data
 7. Back to step 2
 8. Sockets are closed (can use with in python3)
-
-
-
-
-
-
-
 
 """
