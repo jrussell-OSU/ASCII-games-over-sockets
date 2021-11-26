@@ -12,7 +12,7 @@ import select
 client_socket = socket(AF_INET, SOCK_STREAM)
 client_socket.connect(('localhost', 9998))
 print("You are now connected to Hangman!")
-print("Please wait while the host selects a secret word...")
+# print("Please wait while the host selects a secret word...")
 
 while True:
     client_received, client_sent, client_other = select.select(

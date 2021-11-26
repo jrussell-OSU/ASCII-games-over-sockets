@@ -2,11 +2,14 @@
 # Class: CS372 Networking
 # Date: November 23, 2021
 # Description: The server side of a client-server hangman game using sockets on a localhost
-# Works Cited: https://docs.python.org/3.4/howto/sockets.html and https://realpython.com/python-sockets/
-
+# Works Cited: https://docs.python.org/3.4/howto/sockets.html ; https://realpython.com/python-sockets/
+# https://www.randomlists.com/data/words.json (list of random words used for game)
 from socket import *
 import select
 from hangman import *
+import json
+import random
+
 
 # Create server socket, bind to localhost on specified port
 server_host = 'localhost'
@@ -25,9 +28,18 @@ print("Client has joined.")
 # Start new game of hangman
 game = Hangman()
 
+# Get new secret word from random list
+word_list = json.load(open("words.json"))
+word_range = len(word_list["data"]) - 1
+word_index = random.randint(0, word_range)
+word = word_list["data"][word_index]
+game.set_secret_word(word)
+print("Secret word is: ", word)
+
 # Get new secret word
-secret_word = input("Please enter secret word> ")
-game.set_secret_word(secret_word)
+# UNCOMMENT FOLLOWING LINES IF YOU WANT TO MANUALLY CHOOSE WORD
+# secret_word = input("Please enter secret word> ")
+# game.set_secret_word(secret_word)
 
 # Invite client to play hangman
 client_socket.send(bytes("Welcome to Hangman! You lose, you die.\r\nGuess a letter.".encode('utf-8')))

@@ -1,4 +1,9 @@
-# Hangman game
+# Author: Jacob Russell
+# Class: CS372 Networking
+# Date: November 23, 2021
+# Description: A game of hangman used for a server-client game.
+# References: https://www.randomlists.com/data/words.json (list of random words used for game)
+
 class Hangman:
     """A game of hangman"""
 
