@@ -1,29 +1,69 @@
 # Author: Jacob Russell
 # Class: CS372 Networking
 # Date: November 23, 2021
-# Description: A client-server chat program using a python socket
+# Description: The client side of a client-server hangman game using sockets on a localhost
 # Works Cited: https://docs.python.org/3.4/howto/sockets.html and https://realpython.com/python-sockets/
 # https://www.programiz.com/python-programming/methods/built-in/bytes
 from socket import *
 import select
 
+
 # Create a socket:
 client_socket = socket(AF_INET, SOCK_STREAM)
 client_socket.connect(('localhost', 9998))
-print("You are now connected to Solo Chat Room!")
-print("Please enter your first message:")
+print("You are now connected to Hangman!")
+print("Please wait while the host selects a secret word...")
 
 while True:
-    client_input = input("> ")
-    message = bytes(client_input, 'utf-8')
-    client_socket.send(message)
-    if client_input == "/q":
-        print("You have exited the chat room.")
-        client_socket.close()
-        quit()
     client_received, client_sent, client_other = select.select(
         [client_socket], [], [])
     if client_received:
-        data_received = client_socket.recv(2048)
-        print("Server:", data_received.decode('utf-8'))
+
+        # receive and print messages from server
+        server_message = client_socket.recv(4096).decode('utf-8')
+        print(server_message)
+
+        # Quit if game is over
+        if "Goodbye" in server_message:
+            print("Closing connection and exiting...")
+            client_socket.close()
+            quit()
+
+        # Get letter from client
+        letter_validated = False
+        client_input = input("> ")
+
+        while not letter_validated:
+
+            # Data validation on the input
+            if client_input == "/q":  # if client wants to quit
+                client_socket.send(bytes("/q".encode('utf-8')))
+                print("You have exited the game.")
+                client_socket.close()
+                quit()
+            elif len(client_input) > 1:
+                print("Only one letter allowed.")
+                client_input = input("Try again> ")
+            elif len(client_input) == 0:
+                print("Blank entries not accepted.")
+                client_input = input("Try again> ")
+            elif client_input not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz":
+                print("Only English alphabet letters accepted.")
+                client_input = input("Try again> ")
+            else:
+                letter_validated = True
+
+        letter = bytes(client_input, 'utf-8')
+        client_socket.send(letter)
+
+
+
+
+
+
+
+
+
+
+
 
