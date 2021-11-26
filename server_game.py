@@ -7,8 +7,6 @@
 from socket import *
 import select
 from hangman import *
-import json
-import random
 
 
 # Create server socket, bind to localhost on specified port
@@ -27,14 +25,7 @@ print("Client has joined.")
 
 # Start new game of hangman
 game = Hangman()
-
-# Get new secret word from random list
-word_list = json.load(open("words.json"))
-word_range = len(word_list["data"]) - 1
-word_index = random.randint(0, word_range)
-word = word_list["data"][word_index]
-game.set_secret_word(word)
-print("Secret word is: ", word)
+game.new_word()  # get new secret word from random list of words
 
 # Get new secret word
 # UNCOMMENT FOLLOWING LINES IF YOU WANT TO MANUALLY CHOOSE WORD
@@ -42,7 +33,8 @@ print("Secret word is: ", word)
 # game.set_secret_word(secret_word)
 
 # Invite client to play hangman
-client_socket.send(bytes("Welcome to Hangman! You lose, you die.\r\nGuess a letter.".encode('utf-8')))
+client_socket.send(bytes("Welcome to Hangman! You lose, you die. Send /q to quit."
+                         "\r\nGuess a letter.".encode('utf-8')))
 print("Waiting for client...")
 
 while True:
@@ -73,10 +65,25 @@ while True:
         else:
             # If a correct letter is guessed
             if game.add_letter(letter):
+
                 # check game state
                 if game.get_game_state() == "Won":  # if game is won
                     print("Game is won")
-                    client_socket.send(bytes("\nYou win!!! Congratulations!\nGoodbye".encode('utf-8')))
+                    client_socket.send(bytes(("\nSecret word is: " + game.get_secret_word() +
+                                              "\nYou win!!! Congratulations!" +
+                                              "\nPlay again? (y)es or (n)o.").encode('utf-8')))
+
+                    # Start a new game or quit?
+                    response = client_socket.recv(4096).decode('utf-8')
+                    if response == "y":  # start a new game
+                        print("new game starting!")
+                        game = Hangman()
+                        game.new_word()
+                        client_socket.send(bytes("Starting new game! Choose a new letter.", 'utf-8'))
+                    else:
+                        client_socket.send(bytes("Goodbye!", 'utf-8'))
+
+                # If correct letter guessed but not won yet.
                 else:
                     client_socket.send(bytes(("Correct letter guessed!\nRevealed word: "
                                               + game.get_revealed()).encode('utf-8')))
@@ -84,9 +91,21 @@ while True:
             else:
                 if game.get_game_state() == "Lost":  # if game lost
                     print("Game is lost")
-                    client_socket.send(bytes((game.display_string() + "\n*****YOU DIED*****\nGoodbye").encode('utf-8')))
+                    client_socket.send(bytes((game.display_string() + "\n*****YOU DIED*****\nSecret word was: "
+                                              + game.get_secret_word() + "\nPlay again? (y)es or (n)o.").encode('utf-8')))
+
+                    # Start a new game or quit?
+                    response = client_socket.recv(4096).decode('utf-8')
+                    if response == "y":  # start a new game
+                        print("new game starting!")
+                        game = Hangman()
+                        game.new_word()
+                        client_socket.send(bytes("Starting new game! Choose a new letter.", 'utf-8'))
+                    else:
+                        client_socket.send(bytes("Goodbye!", 'utf-8'))
                 else:
-                    client_socket.send(bytes((game.display_string(game.get_no_of_mistakes()) + "\nWrong letter guessed!\nRevealed word: "
+                    client_socket.send(bytes((game.display_string(game.get_no_of_mistakes())
+                                              + "\nWrong letter guessed!\nRevealed word: "
                                               + game.get_revealed()).encode('utf-8')))
 
         # Check game state
@@ -95,7 +114,3 @@ while True:
             client_socket.close()
             server_socket.close()
             quit()
-
-
-
-

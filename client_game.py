@@ -23,47 +23,48 @@ while True:
         server_message = client_socket.recv(4096).decode('utf-8')
         print(server_message)
 
+        # Choose whether to play again
+        if "Play again?" in server_message:
+            response_valid = False
+            while not response_valid:
+                response = input("> ")
+                if response == "y" or response == "n":
+                    client_socket.send(bytes(response, 'utf-8'))
+                    response_valid = True
+                else:
+                    print("Response must be (y)es or (n)o.")
+                    continue
+
+
         # Quit if game is over
-        if "Goodbye" in server_message:
+        elif "Goodbye" in server_message:
             print("Closing connection and exiting...")
             client_socket.close()
             quit()
 
-        # Get letter from client
-        letter_validated = False
-        client_input = input("> ")
+        else:
+            # Get letter from client
+            letter_validated = False
+            client_input = input("> ")
 
-        while not letter_validated:
+            # Data validation on client input
+            while not letter_validated:
+                if client_input == "/q":  # if client wants to quit
+                    client_socket.send(bytes("/q".encode('utf-8')))
+                    print("You have exited the game.")
+                    client_socket.close()
+                    quit()
+                elif len(client_input) > 1:
+                    print("Only one letter allowed.")
+                    client_input = input("Try again> ")
+                elif len(client_input) == 0:
+                    print("Blank entries not accepted.")
+                    client_input = input("Try again> ")
+                elif client_input not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz":
+                    print("Only English alphabet letters accepted.")
+                    client_input = input("Try again> ")
+                else:
+                    letter_validated = True
 
-            # Data validation on the input
-            if client_input == "/q":  # if client wants to quit
-                client_socket.send(bytes("/q".encode('utf-8')))
-                print("You have exited the game.")
-                client_socket.close()
-                quit()
-            elif len(client_input) > 1:
-                print("Only one letter allowed.")
-                client_input = input("Try again> ")
-            elif len(client_input) == 0:
-                print("Blank entries not accepted.")
-                client_input = input("Try again> ")
-            elif client_input not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz":
-                print("Only English alphabet letters accepted.")
-                client_input = input("Try again> ")
-            else:
-                letter_validated = True
-
-        letter = bytes(client_input, 'utf-8')
-        client_socket.send(letter)
-
-
-
-
-
-
-
-
-
-
-
-
+            letter = bytes(client_input, 'utf-8')
+            client_socket.send(letter)

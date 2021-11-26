@@ -2,7 +2,9 @@
 # Class: CS372 Networking
 # Date: November 23, 2021
 # Description: A game of hangman used for a server-client game.
-# References: https://www.randomlists.com/data/words.json (list of random words used for game)
+# https://www.randomlists.com/data/words.json (list of random words used for game)
+import json
+import random
 
 class Hangman:
     """A game of hangman"""
@@ -15,7 +17,7 @@ class Hangman:
         self._no_of_mistakes = 0  # number of mistakes made
         self._mistakes_allowed = 8  # total number of mistakes allowed
         self._display = [
-            ["       _________        "],
+            ["       _________,       "],
             ["       | /      |       "],
             ["       |/       0       "],
             [r"       |      / | \    "],
@@ -95,3 +97,12 @@ class Hangman:
 
     def get_no_of_mistakes(self):
         return self._no_of_mistakes
+
+    def new_word(self):
+        # Get new secret word from random list
+        word_list = json.load(open("words.json"))
+        word_range = len(word_list["data"]) - 1
+        word_index = random.randint(0, word_range)
+        word = word_list["data"][word_index]
+        self.set_secret_word(word)
+        # print("Secret word is: ", word)
