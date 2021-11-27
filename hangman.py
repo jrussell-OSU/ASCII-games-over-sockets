@@ -6,6 +6,7 @@
 import json
 import random
 
+
 class Hangman:
     """A game of hangman"""
 
@@ -26,6 +27,11 @@ class Hangman:
             [r"      /|\              "],
             [r" ___ /_|_\___          "]
         ]
+        self._messages = {   # dictionary that stores general messages sent to the client
+            "welcome": "Welcome to Hangman! Guess a random word.\nIf you get it wrong, you die!"
+                       "\nGuess a letter."
+        }
+        self.new_word()
 
     def set_secret_word(self, word):
         self._secret_word = word.lower()
@@ -57,6 +63,7 @@ class Hangman:
         Take given letter, check if in secret word. If it is, then
         update the revealed word. Then check win status.
         """
+        letter = letter.lower()
         self._letters.append(letter)
         if letter in self._secret_word:
             print("Correct letter guessed!")
@@ -64,20 +71,30 @@ class Hangman:
             if "_" not in self._revealed:  # if all letters guessed
                 # print("Client wins!")  # for debugging
                 self._game_state = "Won"
-            return True
+            return "Good guess!\n" + self._revealed
         else:
             self._no_of_mistakes += 1
             print("Wrong letter guessed!")
             if self._no_of_mistakes >= self._mistakes_allowed:  # if too many wrong guesses made
                 print("Too many mistakes made.")
                 self._game_state = "Lost"
-            return False
+            return self.display_string(self._no_of_mistakes) + "\nWrong!\n" + self._revealed
 
     def get_letters(self):
         return self._letters
 
-    def get_game_state(self):
-        return self._game_state
+    def check_game_state(self):
+        if self._game_state == "Won":
+            message = "\nSecret word is: " + self.get_secret_word() + \
+                      "\nYou win!!! Congratulations!"
+            return True, message
+        elif self._game_state == "Lost":
+            message = self.display_string() + "\n*****YOU DIED*****" \
+                      "\nSecret word was: " + self.get_secret_word()
+            return True, message
+        else:
+            message = "Game not over."
+            return False, message
 
     def update_revealed(self, letter):
         """Adds a correctly guessed letter to the revealed string using slices"""
@@ -94,6 +111,7 @@ class Hangman:
                 self._revealed = string
                 # print("self._revealed after updating: ", self._revealed)  # for debugging
             index += 1
+        # print("secret word is: ", self._secret_word)  # for debugging
 
     def get_no_of_mistakes(self):
         return self._no_of_mistakes
@@ -106,3 +124,24 @@ class Hangman:
         word = word_list["data"][word_index]
         self.set_secret_word(word)
         # print("Secret word is: ", word)
+
+    def get_messages(self, key: str):
+        """Takes key and returns value from hangman's message dictionary"""
+        return self._messages[key]
+
+    def data_validation(self, letter):
+        """Takes data and does validation and returns  message"""
+        if len(letter) != 1:
+            return False, "Must be a single letter."
+        elif letter not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz":
+            return False, "Must be an English alphabet letter."
+        elif letter in self._letters:
+            return False, "Duplicate. All received letters: " + str(self._letters)
+        else:
+            return True, "Data is valid."
+
+    def process_data(self, letter):
+        """Takes a letter and returns: whether correct, and message"""
+        message = self.add_letter(letter)
+        return message
+

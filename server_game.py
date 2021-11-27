@@ -9,6 +9,51 @@ import select
 from hangman import *
 
 
+# Server functions
+def send_message(sock, message: str):
+    """Takes socket and message, encodes the message and sends to socket"""
+    if len(message) > 4095:  # don't accept large inputs
+        print("ERROR: INPUT TOO LARGE. QUITTING...")
+        sock.send(bytes("/q"))
+        sock.close()
+        quit()
+    sock.send(bytes(message, 'utf-8'))
+
+
+def read_message(sock):
+    msg = sock.recv(4096).decode('utf-8')
+    return msg
+
+def close_and_quit():
+    send_message(c_sock, "Goodbye.")
+    c_sock.close()
+    server_socket.close()
+    quit()
+
+def get_game():
+    """Gets which game client would like to play."""
+    print("Asking client which game they would like to play...")
+    games_list = ["(h)angman", "(t)ic-tac-toe"]
+    game = None
+    # valid_game = False
+    send_message(c_sock, "Which game would you like to play?\n"
+                 + str(games_list).replace("[", "").replace("]", "").replace("'", ""))
+    while True:  # continue loop until client picks valid game
+        received = c_sock.recv(4096).decode('utf-8')
+        if received == "/q":  # if client wants to quit
+            close_and_quit()
+        if received == "h":
+            # valid_game = True
+            print("Client chose Hangman.")
+            return Hangman()
+        elif received == "t":
+            send_message(c_sock, "Tic Tac Toe would be really fun!\n"
+                                 "Unfortunately, it doesn't exist yet :( Try again!")
+
+        else:  # if client didn't choose a game
+            send_message(c_sock, "Invalid entry. Try again!")
+
+
 # Create server socket, bind to localhost on specified port
 server_host = 'localhost'
 server_port = 9998
@@ -20,97 +65,59 @@ server_socket.listen(1)  # listen for only one connection
 print("Ready to accept a connection...")
 
 # Accept connection:
-(client_socket, address) = server_socket.accept()
+(c_sock, address) = server_socket.accept()
 print("Client has joined.")
 
-# Start new game of hangman
-game = Hangman()
-game.new_word()  # get new secret word from random list of words
+# Get which game client wants to play. Chooses hangman as default.
+game = get_game()
 
-# Get new secret word
-# UNCOMMENT FOLLOWING LINES IF YOU WANT TO MANUALLY CHOOSE WORD
-# secret_word = input("Please enter secret word> ")
-# game.set_secret_word(secret_word)
-
-# Invite client to play hangman
-client_socket.send(bytes("Welcome to Hangman! You lose, you die. Send /q to quit."
-                         "\r\nGuess a letter.".encode('utf-8')))
-print("Waiting for client...")
+# Welcome player to game and invite first move
+send_message(c_sock, game.get_messages("welcome"))
 
 while True:
     server_received, server_sent, server_other = select.select(
-        [client_socket], [], [])
+        [c_sock], [], [])
 
     # Get messages from client
     if server_received:  # if there is something waiting to be received by server
-        data_received = client_socket.recv(4096)
-        letter = data_received.decode('utf-8')
-        print("Received letter:", letter)
-        # print("Current revealed:", game.get_revealed())  for debugging
-        if letter == "/q":  # if client quits, close all sockets and quit program
+        received = read_message(c_sock)
+        print("Received:", received)
+
+        # check if client wants to quit
+        if received == "/q":  # if client quits, close all sockets and quit program
             print("Client has left the game.")
-            client_socket.close()
-            server_socket.close()
-            quit()
+            close_and_quit()
 
-        # Get letter from client and pass to hangman game
-        letter = letter.lower()
-
-        # Check if letter is a duplicate
-        if letter in game.get_letters():  # if duplicate letter received
-            client_socket.send(bytes(("Duplicate letter, try again. All received letters: " +
-                                      str(game.get_letters())).encode('utf-8')))
-
-        # Add letter and process
-        else:
-            # If a correct letter is guessed
-            if game.add_letter(letter):
-
-                # check game state
-                if game.get_game_state() == "Won":  # if game is won
-                    print("Game is won")
-                    client_socket.send(bytes(("\nSecret word is: " + game.get_secret_word() +
-                                              "\nYou win!!! Congratulations!" +
-                                              "\nPlay again? (y)es or (n)o.").encode('utf-8')))
-
-                    # Start a new game or quit?
-                    response = client_socket.recv(4096).decode('utf-8')
-                    if response == "y":  # start a new game
-                        print("new game starting!")
-                        game = Hangman()
-                        game.new_word()
-                        client_socket.send(bytes("Starting new game! Choose a new letter.", 'utf-8'))
-                    else:
-                        client_socket.send(bytes("Goodbye!", 'utf-8'))
-
-                # If correct letter guessed but not won yet.
-                else:
-                    client_socket.send(bytes(("Correct letter guessed!\nRevealed word: "
-                                              + game.get_revealed()).encode('utf-8')))
-            # If wrong letter guessed
+        # Validate client input
+        while True:
+            (valid, msg) = game.data_validation(received)
+            if not valid:
+                send_message(c_sock, msg)  # send reason not valid
+                received = read_message(c_sock)
+                continue
             else:
-                if game.get_game_state() == "Lost":  # if game lost
-                    print("Game is lost")
-                    client_socket.send(bytes((game.display_string() + "\n*****YOU DIED*****\nSecret word was: "
-                                              + game.get_secret_word() + "\nPlay again? (y)es or (n)o.").encode('utf-8')))
+                break
 
-                    # Start a new game or quit?
-                    response = client_socket.recv(4096).decode('utf-8')
-                    if response == "y":  # start a new game
-                        print("new game starting!")
-                        game = Hangman()
-                        game.new_word()
-                        client_socket.send(bytes("Starting new game! Choose a new letter.", 'utf-8'))
-                    else:
-                        client_socket.send(bytes("Goodbye!", 'utf-8'))
+        # Process client input, check game state, respond to client
+        move_response = game.process_data(received)  # hold until game state is checked
+
+        # check game state
+        (state, message) = game.check_game_state()
+        if state:  # if game won or lost or drawn
+            send_message(c_sock, move_response + message + "\nWould you like to play again? (y)es or (n)o")
+            # Play again?
+            while True:
+                received = read_message(c_sock)
+                if received == "y":
+                    # Get new game, welcome player, and invite first move
+                    game = get_game()
+                    send_message(c_sock, game.get_messages("welcome"))
+                    break
+                elif received == "n":
+                    close_and_quit()
                 else:
-                    client_socket.send(bytes((game.display_string(game.get_no_of_mistakes())
-                                              + "\nWrong letter guessed!\nRevealed word: "
-                                              + game.get_revealed()).encode('utf-8')))
+                    send_message(c_sock, "Invalid response.")
 
-        # Check game state
-        if game.get_game_state() is not None:   # if game is won
-            print("Closing connection and exiting...")
-            client_socket.close()
-            server_socket.close()
-            quit()
+        else:  # if game not won or lost, send response to move
+            send_message(c_sock, move_response)
+
