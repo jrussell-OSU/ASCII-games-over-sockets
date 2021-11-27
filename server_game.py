@@ -1,12 +1,12 @@
 # Author: Jacob Russell
 # Class: CS372 Networking
 # Date: November 23, 2021
-# Description: The server side of a client-server hangman game using sockets on a localhost
+# Description: Server that hosts games over sockets
 # Works Cited: https://docs.python.org/3.4/howto/sockets.html ; https://realpython.com/python-sockets/
-# https://www.randomlists.com/data/words.json (list of random words used for game)
 from socket import *
 import select
 from hangman import *
+from bulls_and_cows import *
 
 
 # Server functions
@@ -33,7 +33,7 @@ def close_and_quit():
 def get_game():
     """Gets which game client would like to play."""
     print("Asking client which game they would like to play...")
-    games_list = ["(h)angman", "(t)ic-tac-toe"]
+    games_list = ["(h)angman", "(b)ulls and cows"]
     game = None
     # valid_game = False
     send_message(c_sock, "Which game would you like to play?\n"
@@ -43,13 +43,11 @@ def get_game():
         if received == "/q":  # if client wants to quit
             close_and_quit()
         if received == "h":
-            # valid_game = True
             print("Client chose Hangman.")
             return Hangman()
-        elif received == "t":
-            send_message(c_sock, "Tic Tac Toe would be really fun!\n"
-                                 "Unfortunately, it doesn't exist yet :( Try again!")
-
+        elif received == "b":
+            print("Client chose Bulls and Cows.")
+            return BullsAndCows()
         else:  # if client didn't choose a game
             send_message(c_sock, "Invalid entry. Try again!")
 
@@ -99,12 +97,12 @@ while True:
                 break
 
         # Process client input, check game state, respond to client
-        move_response = game.process_data(received)  # hold until game state is checked
+        response = game.process_data(received)  # hold until game state is checked
 
         # check game state
         (state, message) = game.check_game_state()
         if state:  # if game won or lost or drawn
-            send_message(c_sock, move_response + message + "\nWould you like to play again? (y)es or (n)o")
+            send_message(c_sock, response + message + "\nStart a new game? (y)es or (n)o")
             # Play again?
             while True:
                 received = read_message(c_sock)
@@ -119,5 +117,5 @@ while True:
                     send_message(c_sock, "Invalid response.")
 
         else:  # if game not won or lost, send response to move
-            send_message(c_sock, move_response)
+            send_message(c_sock, response)
 

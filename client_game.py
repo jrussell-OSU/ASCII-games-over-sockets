@@ -1,7 +1,7 @@
 # Author: Jacob Russell
 # Class: CS372 Networking
 # Date: November 23, 2021
-# Description: The client side of a client-server hangman game using sockets on a localhost
+# Description: Client to connect to game server
 # Works Cited: https://docs.python.org/3.4/howto/sockets.html and https://realpython.com/python-sockets/
 # https://www.programiz.com/python-programming/methods/built-in/bytes
 from socket import *

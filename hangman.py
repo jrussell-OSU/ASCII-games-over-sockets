@@ -11,7 +11,7 @@ class Hangman:
     """A game of hangman"""
 
     def __init__(self):
-        self._secret_word = ""  # stores the word set by the server that the client has to guess
+        self._secret_word = ""  # stores the random word the client has to guess
         self._game_state = None  # whether client has won
         self._revealed = ""  # stores the string of correctly guessed letters
         self._letters = []  # list of letters the client has guessed
@@ -118,10 +118,12 @@ class Hangman:
 
     def new_word(self):
         # Get new secret word from random list
+        word = ""
         word_list = json.load(open("words.json"))
         word_range = len(word_list["data"]) - 1
-        word_index = random.randint(0, word_range)
-        word = word_list["data"][word_index]
+        while len(word) < 5:  # only take words 5 letters or more
+            word_index = random.randint(0, word_range)
+            word = word_list["data"][word_index]
         self.set_secret_word(word)
         # print("Secret word is: ", word)
 
