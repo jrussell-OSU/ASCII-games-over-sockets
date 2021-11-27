@@ -1,6 +1,6 @@
 # Author: Jacob Russell
 # Class: CS372 Networking
-# Date: November 23, 2021
+# Date: November 27, 2021
 # Description: A game of Bulls and Cows used for a server-client game.
 import random
 

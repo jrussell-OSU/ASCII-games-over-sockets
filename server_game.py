@@ -7,6 +7,7 @@ from socket import *
 import select
 from hangman import *
 from bulls_and_cows import *
+from ship_battle import *
 
 
 # Server functions
@@ -33,7 +34,7 @@ def close_and_quit():
 def get_game():
     """Gets which game client would like to play."""
     print("Asking client which game they would like to play...")
-    games_list = ["(h)angman", "(b)ulls and cows"]
+    games_list = ["(h)angman", "(b)ulls and cows", "(s)hip battle"]
     game = None
     # valid_game = False
     send_message(c_sock, "Which game would you like to play?\n"
@@ -48,6 +49,9 @@ def get_game():
         elif received == "b":
             print("Client chose Bulls and Cows.")
             return BullsAndCows()
+        elif received == "s":
+            print("Client chose Ship Battle.")
+            return ShipBattle()
         else:  # if client didn't choose a game
             send_message(c_sock, "Invalid entry. Try again!")
 
@@ -79,7 +83,7 @@ while True:
     # Get messages from client
     if server_received:  # if there is something waiting to be received by server
         received = read_message(c_sock)
-        print("Received:", received)
+        # print("Received:", received)  for debugging
 
         # check if client wants to quit
         if received == "/q":  # if client quits, close all sockets and quit program
