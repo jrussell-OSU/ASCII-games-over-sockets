@@ -128,7 +128,7 @@ class Spaceships:
         else:
             # print("sending response to client that ship is placed")
             return self.display_board(self._client_board) + "Ship placed, now place: " + \
-                   self.get_ship_name(self._client_ships[0])
+                   self.get_ship_name(self._client_ships[0][0])
 
     def fire_shot(self, coords):
         """Used to fire automatic shot by server and take client coordinates for theirs"""
@@ -314,7 +314,7 @@ class Spaceships:
         elif self._game_state == "Won":
             return True, "\n\nYou win! All enemy spaceships destroyed!"
         else:
-            return True, "\n\n\nYou lose!"
+            return True, "\n\n\nYou lose! The enemy has destroyed your fleet!"
 
     def data_validation(self, coords):
         # Make sure at least two
