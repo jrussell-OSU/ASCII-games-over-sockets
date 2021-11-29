@@ -21,8 +21,11 @@ class Spaceships:
         self._server_placed = False  # whether all ships placed and game ready to begin
         self._client_placed = False
         self._ship_layouts = {"s": [], "a": [], "b": [], "c": []}  # Stores all valid arrangements for each ship type.
+        self._game_state = None
+        self._hits = {"server": [], "client": []}
         self.pop_ship_layouts()
         self.server_place_ships()
+        self._ships_exploded = {"server": 0, "client": 0}
 
         self._messages = {
             "welcome": "Welcome to Spaceship! "
@@ -30,7 +33,7 @@ class Spaceships:
                        "the enemy's ships on a different board. The enemy will also shoot at your ships.\n"
                        "Ships (and lengths): Scout Ship(2), Assault Ship(3), Battlecruiser(4), Capital Ship(5)\n"
                        "Ships cannot be placed diagonally. When placing a ship, type all the coordinates.\n"
-                       "For example: Where to place your assault ship? Valid response: G1, G2, G3.\n"
+                       "For example: Where to place your assault ship? Valid response: G1, G2, G3 (or g1, g2, g3)\n"
                        "\nNow, please place your first ship.\n\n"
                        "Where should I put your Scout Ship?\n",
             "fire": ["Enemy launches a missile! Watch out!"]
@@ -86,11 +89,11 @@ class Spaceships:
         print(self.display_board(self._server_board))  # for debugging
 
     def get_ship_name(self, ship):
-        if ship == "s2":
+        if ship == "s":
             return "Scout Ship (2)"
-        elif ship == "a3":
+        elif ship == "a":
             return "Assault Ship (3)"
-        elif ship == "b4":
+        elif ship == "b":
             return "Battlecruiser (4)"
         else:
             return "Capital Ship (5)"
@@ -107,25 +110,23 @@ class Spaceships:
         ship = self._client_ships[0]
         layouts = self._ship_layouts[ship[0]]
 
-        # print("Layout from client:", layout, "All available layouts:", layouts)
         if layout in layouts:
             for square in layout:
                 self._client_board[square] = ship[0]
                 self._coords["client"].remove(square)
             del self._client_ships[0]
-            #print("Ship placed, now checking if all ships placed.")
         else:
             # print("Client layout was invalid!!")
             return "Layout input was invalid, try again."
 
         # Check if all ships placed
         if len(self._client_ships) <= 0:
-            print("All client ships have been placed.")
+            # print("All client ships have been placed.")
             self._client_placed = True
             return self.display_board(self._client_board) + "\nAll ships placed!\n\nTake a shot! Enter the coordinates."  # all ships placed, time to start firing
             # return self.display_board(self._client_board) + "All ships placed."
         else:
-            print("sending response to client that ship is placed")
+            # print("sending response to client that ship is placed")
             return self.display_board(self._client_board) + "Ship placed, now place: " + \
                    self.get_ship_name(self._client_ships[0])
 
@@ -139,25 +140,75 @@ class Spaceships:
             if self._server_shots[server_shot] == "-":
                 break  # don't do a duplicate shot
         if self._client_board[server_shot] != "-":
-            server_shot_msg = "Enemy hits! On square: " + server_shot + "\nClient Board:\n" \
-                              + self.display_board(self._client_board)
+            c_ship = self._client_board[server_shot]
+            client_ship = self.get_ship_name(c_ship)
             self._server_shots[server_shot] = "X"
             self._client_board[server_shot] = "X"
+            self._hits["client"].append(c_ship)  # Add hit to hit list
+            print("server has hit these client ships: ", self._hits["client"])  # for debugging
+            server_shot_msg = "Enemy hits your " + client_ship + ", on square: " + server_shot + \
+                              self.explode("server") + "\nYour board:\n" \
+                              + self.display_board(self._client_board)
+
         else:
-            server_shot_msg = "Enemy misses!\n" + "Client Board:\n" + self.display_board(self._client_board)
+            server_shot_msg = "Enemy misses!\n" + "Your board:\n" + self.display_board(self._client_board)
             self._server_shots[server_shot] = "0"
 
         # Fire client shot
         if self._server_board[coords] != "-":
-            client_shot_msg = "Client hits! On square: " + coords + ", hitting enemy's: "\
-                          + self._server_board[coords]
+            s_ship = self._server_board[coords]
+            s_name = self.get_ship_name(s_ship)
             self._client_shots[coords] = "X"
             self._server_board[coords] = "X"
+            self._hits["server"].append(s_ship)  # Add hit to hit list
+            print("client has hit these sever ships: ", self._hits["server"])  # for debugging
+            client_shot_msg = "Client hits! On square: " + coords + ". " + self.explode("client") \
+                              + "\nYour shots grid:\n" + self.display_board(self._client_shots)
         else:
             self._client_shots[coords] = "0"
-            client_shot_msg = "Client misses!\n" + "Client hit map: \n" + self.display_board(self._client_shots)
+            client_shot_msg = "Client misses!\n" + "Your shots grid: \n" + self.display_board(self._client_shots)
 
         return fire_message + "\n" + server_shot_msg + "\n" + client_shot_msg + "\n" + "What is your next shot?"
+
+    def explode(self, player):
+        """Takes a player's hit_list and returns if any ships have exploded."""
+        message = ""
+        if player == "server":
+            hit_list = self._hits["client"]
+        else:
+            hit_list = self._hits["server"]
+        for i in hit_list:
+            if i == "s":
+                if hit_list.count("s") == 2:
+                    message += "Scout Ship explodes! "
+                    hit_list.remove(i)
+                    break
+            if i == "a":
+                if hit_list.count("a") == 3:
+                    message += "Assault Ship explodes! "
+                    hit_list.remove(i)
+                    break
+            if i == "b":
+                if hit_list.count("b") == 4:
+                    message += "Battlecruiser explodes! "
+                    hit_list.remove(i)
+                    break
+            if i == "c":
+                if hit_list.count("c") == 5:
+                    message += "Capital Ship explodes! "
+                    hit_list.remove(i)
+                    break
+        if len(message) > 0:
+            if player == "server":
+                self._ships_exploded["client"] += 1
+                if self._ships_exploded["client"] == 4:
+                    self._game_state = "Lost"
+            else:
+                self._ships_exploded["server"] += 1
+                if self._ships_exploded["server"] == 4:
+                    self._game_state = "Won"
+
+        return message
 
     def pop_ship_layouts(self):
         """Generates dictionary of all possible layouts for each type of ship"""
@@ -228,6 +279,19 @@ class Spaceships:
         print_string = board_string.replace("[", "").replace("]", "").replace(",", "").replace("'", "")
         return print_string
 
+    def strip_string(self, string):
+        stripped_string = string
+        for i in string:
+            print("Check character: ", i)
+            if i not in "ABCDEFGHabcdefgh123456789":
+                print(i, "not a letter or number.")
+                stripped_string = string.replace(i, "")
+                string = stripped_string
+                print("Stripped_string so far: ", stripped_string)
+
+        print("Given string: ", string, "Stripped string: ", stripped_string)  # for debugging
+        return stripped_string
+
     def get_coords(self, string):
         """Takes a string and returns list of coordinates. Used for placing ships."""
         coordinates_list = []
@@ -244,11 +308,18 @@ class Spaceships:
         return coordinates_list
 
     def check_game_state(self):
-        return False, "Game still going"
-
+        """Checks games state. Returns boolean and message."""
+        if not self._game_state:
+            return False, "Game still going"
+        elif self._game_state == "Won":
+            return True, "\n\n\nYou win!"
+        else:
+            return True, "\n\n\nYou lose!"
 
     def data_validation(self, coords):
-
+        # Make sure at least two
+        if len(self.strip_string(coords)) < 2:
+            return False, "Invalid coordinates, try again."
         # If client is still placing ships:
         if not self._client_placed:
             ship = self._client_ships[0]
@@ -281,20 +352,15 @@ class Spaceships:
 
         # If client is making a shot
         else:
+            coords = self.get_coords(coords)[0]
             if coords not in self._coords_list:
                 return False, "Invalid coordinates. Try again."
             print("Entering shot firing phase.")
             return True, "Valid firing coordinates, now running fire_shot()"
 
-    def process_data(self, input):
+    def process_data(self, coords):
         if not self._client_placed:  # if client hasn't finished placing their ships
-            print("layout from client: ", input, "converted: ", self.get_coords(input))
-            return self.client_place_ships(self.get_coords(input))
+            return self.client_place_ships(self.get_coords(coords))
         else:
-            return self.fire_shot(input)
-
-
-
-#game = Spaceships()  # for debugging
-#print(game.display_board(game._server_board))  # for debugging
-#print(game.display_board(game._client_board))  # for debugging
+            coords = self.get_coords(coords)[0]
+            return self.fire_shot(coords)
