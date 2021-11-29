@@ -29,7 +29,7 @@ class Spaceships:
 
         self._messages = {
             "welcome": "Welcome to Spaceship! "
-                       "Instructions: You will place your ships on a board and attempt to sink\n"
+                       "Instructions: You will place your ships on a board and attempt to blow up\n"
                        "the enemy's ships on a different board. The enemy will also shoot at your ships.\n"
                        "Ships (and lengths): Scout Ship(2), Assault Ship(3), Battlecruiser(4), Capital Ship(5)\n"
                        "Ships cannot be placed diagonally. When placing a ship, type all the coordinates.\n"
@@ -312,7 +312,7 @@ class Spaceships:
         if not self._game_state:
             return False, "Game still going"
         elif self._game_state == "Won":
-            return True, "\n\n\nYou win!"
+            return True, "\n\nYou win! All enemy spaceships destroyed!"
         else:
             return True, "\n\n\nYou lose!"
 
