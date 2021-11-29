@@ -147,7 +147,7 @@ class Spaceships:
             self._hits["client"].append(c_ship)  # Add hit to hit list
             print("server has hit these client ships: ", self._hits["client"])  # for debugging
             server_shot_msg = "Enemy hits your " + client_ship + ", on square: " + server_shot + \
-                              self.explode("server") + "\nYour board:\n" \
+                              ". " + self.explode("server") + "\nYour board:\n" \
                               + self.display_board(self._client_board)
 
         else:

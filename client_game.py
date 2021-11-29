@@ -27,7 +27,7 @@ def read_message(sock):
 # Create a socket:
 c_sock = socket(AF_INET, SOCK_STREAM)
 c_sock.connect(('localhost', 9998))
-print("You are now connected to the Game Server!")
+print("You are now connected to the Game Server!\nEnter /q anytime to quit.\n")
 
 while True:
     client_received, client_sent, client_other = select.select(
