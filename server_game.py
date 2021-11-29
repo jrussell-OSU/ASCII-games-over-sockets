@@ -7,14 +7,21 @@ from socket import *
 import select
 from hangman import *
 from bulls_and_cows import *
-from ship_battle import *
+from spaceships import *
+
+########################################################################################################################
+# Server Functions
 
 
-# Server functions
+
+########################################################################################################################
+
+
 def send_message(sock, message: str):
     """Takes socket and message, encodes the message and sends to socket"""
     if len(message) > 4095:  # don't accept large inputs
         print("ERROR: INPUT TOO LARGE. QUITTING...")
+        # print("Too large message is:", message)  # for debugging
         sock.send(bytes("/q"))
         sock.close()
         quit()
@@ -25,16 +32,18 @@ def read_message(sock):
     msg = sock.recv(4096).decode('utf-8')
     return msg
 
+
 def close_and_quit():
     send_message(c_sock, "Goodbye.")
     c_sock.close()
     server_socket.close()
     quit()
 
+
 def get_game():
     """Gets which game client would like to play."""
     print("Asking client which game they would like to play...")
-    games_list = ["(h)angman", "(b)ulls and cows", "(s)hip battle"]
+    games_list = ["(h)angman", "(b)ulls and cows", "(s)paceships"]
     game = None
     # valid_game = False
     send_message(c_sock, "Which game would you like to play?\n"
@@ -50,10 +59,19 @@ def get_game():
             print("Client chose Bulls and Cows.")
             return BullsAndCows()
         elif received == "s":
-            print("Client chose Ship Battle.")
-            return ShipBattle()
+            print("Client chose Spaceships.")
+            return Spaceships()
         else:  # if client didn't choose a game
             send_message(c_sock, "Invalid entry. Try again!")
+
+########################################################################################################################
+# Game Server
+
+# Create socket, accept client connection, maintain server loop
+# Run game framework (which can accept multiple games built for this server interchangeably
+# Close server when client quits
+
+########################################################################################################################
 
 
 # Create server socket, bind to localhost on specified port
@@ -104,6 +122,7 @@ while True:
         response = game.process_data(received)  # hold until game state is checked
 
         # check game state
+        print("CHecking game state")  # for debugging
         (state, message) = game.check_game_state()
         if state:  # if game won or lost or drawn
             send_message(c_sock, response + message + "\nStart a new game? (y)es or (n)o")
