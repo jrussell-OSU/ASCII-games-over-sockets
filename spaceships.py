@@ -31,12 +31,13 @@ class Spaceships:
             "welcome": "Welcome to Spaceship! "
                        "Instructions: You will place your ships on a board and attempt to blow up\n"
                        "the enemy's ships on a different board. The enemy will also shoot at your ships.\n"
+                       "Unfortunately, the enemy has more weapons and will fire twice for each one of yours!\n\n"
                        "Ships (and lengths): Scout Ship(2), Assault Ship(3), Battlecruiser(4), Capital Ship(5)\n"
                        "Ships cannot be placed diagonally. When placing a ship, type all the coordinates.\n"
                        "For example: Where to place your assault ship? Valid response: G1, G2, G3 (or g1, g2, g3)\n"
                        "\nNow, please place your first ship.\n\n"
                        "Where should I put your Scout Ship?\n",
-            "fire": ["Enemy launches a missile! Watch out!"]
+            "fire": ["Enemy launches two missiles!"]
         }
 
         # Ship types:
@@ -133,7 +134,7 @@ class Spaceships:
     def fire_shot(self, coords):
         """Used to fire automatic shot by server and take client coordinates for theirs"""
 
-        # Fire server shot
+        # Fire server shot. Code doubled to fire two shots from server for every single player shot.
         fire_message = self._messages["fire"][0]
         while True:
             server_shot = self.rand_coord()
@@ -146,12 +147,33 @@ class Spaceships:
             self._client_board[server_shot] = "X"
             self._hits["client"].append(c_ship)  # Add hit to hit list
             print("server has hit these client ships: ", self._hits["client"])  # for debugging
-            server_shot_msg = "Enemy hits your " + client_ship + ", on square: " + server_shot + \
+            server_shot_msg = "First enemy missile hits your " + client_ship + ", on square: " + server_shot + \
+                              ". " + self.explode("server")
+
+        else:
+            server_shot_msg = "First enemy missile misses its target!"
+            self._server_shots[server_shot] = "0"
+
+        # Server fires a second time
+        fire_message = self._messages["fire"][0]
+        while True:
+            server_shot = self.rand_coord()
+            if self._server_shots[server_shot] == "-":
+                break  # don't do a duplicate shot
+        if self._client_board[server_shot] != "-":
+            c_ship = self._client_board[server_shot]
+            client_ship = self.get_ship_name(c_ship)
+            self._server_shots[server_shot] = "X"
+            self._client_board[server_shot] = "X"
+            self._hits["client"].append(c_ship)  # Add hit to hit list
+            print("server has hit these client ships: ", self._hits["client"])  # for debugging
+            server_shot_msg += "\nSecond enemy missile hits your " + client_ship + ", on square: " + server_shot + \
                               ". " + self.explode("server") + "\nYour board:\n" \
                               + self.display_board(self._client_board)
 
         else:
-            server_shot_msg = "Enemy misses!\n" + "Your board:\n" + self.display_board(self._client_board)
+            server_shot_msg += "\nSecond enemy missile goes wide of the mark!\n" + "Your board:\n" \
+                               + self.display_board(self._client_board)
             self._server_shots[server_shot] = "0"
 
         # Fire client shot
