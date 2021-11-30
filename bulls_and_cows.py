@@ -15,7 +15,10 @@ class BullsAndCows:
         self._no_of_guesses = 0
         self._bulls = 0
         self._cows = 0
-        self._guesses = []  # stores all valid guesses
+        self._guess = ""  # stores all valid guesses
+        # Indexes: Bulls: 8, Cows 17, 22, 27, 32, 37
+        self._display = ["|Bulls: ", "", "  |Cows: ", "", "  |Guess: ", "", "  -  ", "", "  -  ", "", "  -  ", "", "  "]
+        self._running_display = ""
         self.new_num()  # get a new secret number
         self._messages = {
             "welcome": "Welcome to Bulls and Cows!\n"
@@ -23,6 +26,9 @@ class BullsAndCows:
                        "All digits in the integer are unique, there are no repeating digits.\n"
                        "A 'Bull' is when you guess a correct digit in the correct position.\n"
                        "A 'Cow' is when you guess a correct digit but in wrong position.\n"
+                       "Example: If the secret number is 1234, and you guess, 4321 you would have 0 bulls and 4 cows.\n"
+                       "Whereas if you guessed 2134, you would have 2 bulls and 2 cows.\n\n"
+                       "New secret number generated... \n"
                        "Please enter a four digit integer."
         }
 
@@ -45,6 +51,8 @@ class BullsAndCows:
 
     def data_validation(self, num: str):
         """Make sure number (string) is 4 digits"""
+        if num == "/q":
+            return False, "Goodbye."
         for i in num:
             if i not in "0123456789":
                 return False, "Must be an integer."
@@ -53,15 +61,15 @@ class BullsAndCows:
         for p in num:
             if num.count(p) > 1:
                 return False, "Integer must contain all unique digits."
-        if num in self._guesses:
-            return False, "Duplicate guess.\n" + self.display()
+        if num == self._guess:
+            return False, "Duplicate guess.\n"
         return True, "Data is valid."
 
     def process_data(self, num):
         """Check number against secret number"""
         self._bulls = 0
         self._cows = 0
-        self._guesses.append(num)
+        self._guess = num
         self._no_of_guesses += 1
 
         # Set game state if guess is correct
@@ -100,10 +108,19 @@ class BullsAndCows:
             return False, "Game not over yet."
 
     def display(self):
-        guesses = str(self._guesses).replace("'", "").replace("]", "").replace("[", "")
-        return "Bulls: " + str(self._bulls) + " Cows: " + str(self._cows) +\
-               "\nGuesses: " + guesses
-
+        """Returns a string of a human readable game update readout"""
+        print("guess is: ", self._guess)
+        self._display[1] = str(self._bulls)
+        self._display[3] = str(self._cows)
+        self._display[5] = self._guess[0]
+        self._display[7] = self._guess[1]
+        self._display[9] = self._guess[2]
+        self._display[11] = self._guess[3]
+        display_string = ""
+        for i in self._display:
+            display_string += i
+        self._running_display += display_string + "\n"
+        return self._running_display
 
 
 
