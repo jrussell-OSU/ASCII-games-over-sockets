@@ -239,9 +239,9 @@ class Sudoku:
     def data_validation(self, answer: str):
         cell, answer = self.strip_string(answer)
         if cell == "":
-            return False, "Data invalid."
+            return False, self.grid_string() + "\nInput is invalid."
         else:
-            return True, "Data is valid"
+            return True, self.grid_string() + "\nData is valid"
 
     def strip_string(self, string):
         """
@@ -268,7 +268,7 @@ class Sudoku:
     def process_data(self, answer: str):
         cell, answer = self.strip_string(answer)
         if cell != "" and cell not in self._permanent:
-            return "Cannot edit provided answers."
+            return self.grid_string() + "\nCannot edit provided answers."
         else:
             self._grid[cell] = answer
             return self.grid_string() + "\nNext answer?"
@@ -283,8 +283,8 @@ class Sudoku:
         if blanks == 0:
             self.update_dictionaries()  # updates row, column, and 3x3 dictionaries to match game
             if self.is_valid(self._grid):
-                return True, "You win!"
+                return True, "\n\nYYOU WIN! Well done!"
             else:
-                return False, "Puzzle invalid, you lose!"
+                return False, "\n\nPuzzle invalid, YOU LOSE!"
         else:
             return False, "Game still going."
