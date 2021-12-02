@@ -9,12 +9,14 @@ class Sudoku:
     """A game of sudoku"""
 
     def __init__(self):
-        self._grid = {}
-        self._blank_grid = {}
-        self._3x3s = {}
+        self._grid = {}  # current game grid
+        self._blank_grid = {}  # grid with just coordinates no answers
+        self._3x3s = {}  # each 3x3 box in grid
         self._rows = {}
         self._columns = {}
-        self._boxes = {}
+        self._boxes = {}  # stores just coordinates of each 3x3 grid (no answer)
+        self._solution = {}  # stores copy of full solution
+        self._permanent = []  # stores which coordinates cannot be edited
         self._messages = {
             "welcome": "Welcome to Sudoku!\n"
                        "Please enter a coordinate and then a number to fill in each cell."
@@ -119,24 +121,24 @@ class Sudoku:
 
         return self.create_solution(grid, index + 1)
 
-    def get_cell_from_index(self, index: int) -> str:
-        """
-        Takes index and returns matching alpha-numeric coordinates (e.g. A1)
-        The top left of grid is considered index 0,
-        bottom right would be index 80.
-        """
-        return list(self._grid.keys())[index]
-
     def create_puzzle(self):
         """
         Takes valid solution. Removes numbers and creates blank spaces.
         """
+        # Store solution (used mostly for debugging currently)
+        for i in self._grid:
+            key = i
+            answer = self._grid[i]
+            self._solution[key] = answer
+
+        # Remove 4-6 answers from each 3x3 box on the grid
         for box in self._boxes:
             cells = list(self._boxes[box])
             amount = random.randint(4, 6)
             while amount > 0:
                 index = random.randint(0, len(cells) - 1)
                 cell = cells[index]
+                self._permanent.append(cell)
                 self._grid[cell] = ""
                 amount -= 1
 
@@ -214,21 +216,61 @@ class Sudoku:
             count += 1
         return rows
 
+    def update_dictionaries(self):
+        """
+        Updates rows, columns, and 3x3s dictionaries
+        to reflect current game grid answers.
+        """
+        # clear dictionaries
+        for key in self._3x3s:
+            self._3x3s[key].clear()
+        for key in self._rows:
+            self._rows[key].clear()
+        for key in self._columns:
+            self._columns[key].clear()
+
+        # Put current game grid values in dictionaries
+        # this is only called after all cells have answers (no blanks)
+        for cell in self._grid:
+            self._rows[cell[1]].append(self._grid[cell])
+            self._columns[cell[0]].append(self._grid[cell])
+            self._3x3s[self.get_box(cell)].append(self._grid[cell])
+
     def data_validation(self, answer: str):
-        return True, "Data is valid"
+        cell, answer = self.strip_string(answer)
+        if cell == "":
+            return False, "Data invalid."
+        else:
+            return True, "Data is valid"
+
+    def strip_string(self, string):
+        """
+        Takes string strips all extraneous characters.
+        Returns tuple of (cell coordinates, cell answer).
+        """
+        cell = ""
+        answer = ""
+        for i in string:
+            if i not in "ABCDEFGHIabcdefghi123456789":
+                string = string.replace(i, "")
+
+        if len(string) == 3:
+            if string[0] in "ABCDEFGHIabcdefghi":
+                cell += string[0].upper()
+                cell += string[1]
+            elif string[0] in "123456789":
+                cell += string[1].upper()
+                cell += string[0]
+            answer = string[2]
+
+        return cell, answer
 
     def process_data(self, answer: str):
-        for i in answer:
-            if i not in "ABCDEFGHIabcdefghi123456789":
-                answer = answer.replace(i, "")
-        cell = ""
-        cell += answer[0].upper()
-        cell += answer[1]
-        num = answer[2]
-        if self._grid[cell] != "":
-            return "Cell already occupied."
+        cell, answer = self.strip_string(answer)
+        if cell != "" and cell not in self._permanent:
+            return "Cannot edit provided answers."
         else:
-            self._grid[cell] = num
+            self._grid[cell] = answer
             return self.grid_string() + "\nNext answer?"
 
     def check_game_state(self):
@@ -239,11 +281,10 @@ class Sudoku:
                 break
 
         if blanks == 0:
+            self.update_dictionaries()  # updates row, column, and 3x3 dictionaries to match game
             if self.is_valid(self._grid):
                 return True, "You win!"
             else:
                 return False, "Puzzle invalid, you lose!"
         else:
             return False, "Game still going."
-
-
