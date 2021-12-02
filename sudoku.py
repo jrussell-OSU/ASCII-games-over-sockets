@@ -15,10 +15,14 @@ class SudokuGame:
         self._rows = {}
         self._columns = {}
         self._boxes = {}
-        self._candidates = {}
         self.populate()
-        while not self.create_puzzle():
+
+        # Calls recursive create_solution() until a valid puzzle is created,
+        # usually takes about 500 - 1000ms.
+        while not self.create_solution():
             self.populate()
+
+        self.create_puzzle()  # removes answers from cells to create a puzzle
 
     def populate(self):
         """
@@ -74,22 +78,20 @@ class SudokuGame:
                             "G8", "H8", "I8",
                             "G9", "H9", "I9"]
 
-        # Populate candidates dictionary
-        for key in self._grid:
-            self._candidates[key] = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
-
-    def create_puzzle(self, grid=None, index=0):
+    def create_solution(self, grid=None, index=0):
+        """
+        Recursively attempts to create a valid Sudoku solution.
+        This is fairly brute force, and takes many tries to succeed.
+        """
         if grid is None:
             grid = self._blank_grid
         if index == 81:  # if we have passed end of grid
             if self.is_valid(grid):  # if the grid puzzle is valid
                 self._grid = grid
-                print("Valid puzzle created!!")  # for debug
-                self.print_board()
                 return True
             else:  # if invalid puzzle is created
                 return False
-        cell = self.get_cell_from_index(index)
+        cell = list(self._grid.keys())[index]
         possibles = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
         if grid[cell] == "":
             while len(possibles) > 0 and grid[cell] == "":
@@ -106,7 +108,7 @@ class SudokuGame:
                     self._columns[cell[0]].append(num)
                 possibles.remove(num)
 
-        return self.create_puzzle(grid, index + 1)
+        return self.create_solution(grid, index + 1)
 
     def get_cell_from_index(self, index: int) -> str:
         """
@@ -116,14 +118,21 @@ class SudokuGame:
         """
         return list(self._grid.keys())[index]
 
-    def clear_dictionaries(self):
-        self._grid = self._blank_grid
-        for key in self._rows:
-            self._rows[key].clear()
-        for key in self._columns:
-            self._columns[key].clear()
-        for key in self._3x3s:
-            self._3x3s[key].clear()
+    def create_puzzle(self):
+        """
+        Takes valid solution. Removes numbers and creates blank spaces.
+        """
+        for box in self._boxes:
+            cells = list(self._boxes[box])
+            amount = random.randint(4, 6)
+            while amount > 0:
+                index = random.randint(0, len(cells) - 1)
+                cell = cells[index]
+                self._grid[cell] = ""
+                amount -= 1
+        #self.print_grid()
+
+
 
     def get_box(self, cell):
         for key in self._boxes:
@@ -157,17 +166,32 @@ class SudokuGame:
 
         return True  # if there are no repeating #'s in row, column or box
 
-    def print_board(self):
+    def print_grid(self):
+        """Prints the puzzle in a human readable string"""
         count = 1
         rows = ""
         for key in self._grid:
-            rows += self._grid[key] + "  "
+            cell = self._grid[key]
+            if cell == "":
+                cell = " "
+            if count == 1:
+                rows += "|--------------------------|\n|"
+            if count % 3 == 0:
+                rows += cell + " |"
+            else:
+                rows += cell + "  "
             if count % 9 == 0:
-                rows += "\n"
+                rows += "\n|"
+            if count % 27 == 0:
+                if count == 81:
+                    rows += "--------------------------|\n"
+                else:
+                    rows += "--------------------------|\n|"
             count += 1
         print(rows)
 
 
 game = SudokuGame()
+game.print_grid()
 
 
