@@ -5,7 +5,7 @@
 import random
 
 
-class SudokuGame:
+class Sudoku:
     """A game of sudoku"""
 
     def __init__(self):
@@ -15,6 +15,11 @@ class SudokuGame:
         self._rows = {}
         self._columns = {}
         self._boxes = {}
+        self._messages = {
+            "welcome": "Welcome to Sudoku!\n"
+                       "Please enter a coordinate and then a number to fill in each cell."
+                       "Example: A1, 7  would put a 7 in the top left cell."
+        }
         self.populate()
 
         # Calls recursive create_solution() until a valid puzzle is created,
@@ -23,6 +28,10 @@ class SudokuGame:
             self.populate()
 
         self.create_puzzle()  # removes answers from cells to create a puzzle
+
+    def get_messages(self, key):
+        if key == "welcome":
+            return self.grid_string() + "\n" + self._messages[key]
 
     def populate(self):
         """
@@ -130,9 +139,6 @@ class SudokuGame:
                 cell = cells[index]
                 self._grid[cell] = ""
                 amount -= 1
-        #self.print_grid()
-
-
 
     def get_box(self, cell):
         for key in self._boxes:
@@ -166,32 +172,78 @@ class SudokuGame:
 
         return True  # if there are no repeating #'s in row, column or box
 
-    def print_grid(self):
-        """Prints the puzzle in a human readable string"""
+    def grid_string(self):
+        """Returns the puzzle in a human readable string"""
         count = 1
-        rows = ""
+        rows = "     A  B  C   D  E  F   G  H  I\n"
         for key in self._grid:
             cell = self._grid[key]
+
             if cell == "":
                 cell = " "
             if count == 1:
-                rows += "|--------------------------|\n|"
+                rows += "   |-----------------------------|\n1: | "
             if count % 3 == 0:
-                rows += cell + " |"
+                rows += cell + " | "
             else:
                 rows += cell + "  "
-            if count % 9 == 0:
-                rows += "\n|"
+            if count % 9 == 0 and count % 27 == 0:
+                rows += "\n   |"
+            elif count % 9 == 0:
+                if count == 9:
+                    rows += "\n2: | "
+                elif count == 18:
+                    rows += "\n3: | "
+                elif count == 36:
+                    rows += "\n5: | "
+                elif count == 45:
+                    rows += "\n6: | "
+                elif count == 63:
+                    rows += "\n8: | "
+                elif count == 72:
+                    rows += "\n9: | "
             if count % 27 == 0:
                 if count == 81:
-                    rows += "--------------------------|\n"
+                    rows += "-----------------------------|\n"
+                elif count == 27:
+                    rows += "-----------------------------|\n4: | "
+                elif count == 54:
+                    rows += "-----------------------------|\n7: | "
                 else:
-                    rows += "--------------------------|\n|"
+                    rows += "-----------------------------|\n   | "
             count += 1
-        print(rows)
+        return rows
 
+    def data_validation(self, answer: str):
+        return True, "Data is valid"
 
-game = SudokuGame()
-game.print_grid()
+    def process_data(self, answer: str):
+        for i in answer:
+            if i not in "ABCDEFGHIabcdefghi123456789":
+                answer = answer.replace(i, "")
+        cell = ""
+        cell += answer[0].upper()
+        cell += answer[1]
+        num = answer[2]
+        if self._grid[cell] != "":
+            return "Cell already occupied."
+        else:
+            self._grid[cell] = num
+            return self.grid_string() + "\nNext answer?"
+
+    def check_game_state(self):
+        blanks = 0
+        for key in self._grid:
+            if self._grid[key] == "":
+                blanks += 1
+                break
+
+        if blanks == 0:
+            if self.is_valid(self._grid):
+                return True, "You win!"
+            else:
+                return False, "Puzzle invalid, you lose!"
+        else:
+            return False, "Game still going."
 
 

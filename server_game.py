@@ -8,6 +8,7 @@ import select
 from hangman import *
 from bulls_and_cows import *
 from spaceships import *
+from sudoku import *
 
 ########################################################################################################################
 # Server Functions
@@ -43,7 +44,7 @@ def close_and_quit():
 def get_game():
     """Gets which game client would like to play."""
     print("Asking client which game they would like to play...")
-    games_list = ["(h)angman", "(b)ulls and cows", "(s)paceships"]
+    games_list = ["(h)angman", "(b)ulls and cows", "(s)paceships", "sudo(k)u"]
     game = None
     # valid_game = False
     send_message(c_sock, "Which game would you like to play?\n"
@@ -61,6 +62,9 @@ def get_game():
         elif received == "s":
             print("Client chose Spaceships.")
             return Spaceships()
+        elif received == "k":
+            print("Client chose Sudoku.")
+            return Sudoku()
         else:  # if client didn't choose a game
             send_message(c_sock, "Invalid entry. Try again!")
 
