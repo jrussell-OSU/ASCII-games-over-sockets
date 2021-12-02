@@ -11,11 +11,6 @@ import select
 # Client functions
 def send_message(sock, message: str):
     """Takes socket and message, encodes the message and sends to socket"""
-    if len(message) > 4095:  # don't accept large inputs
-        print("ERROR: INPUT TOO LARGE. QUITTING...")
-        sock.send(bytes("/q"))
-        sock.close()
-        quit()
     sock.send(bytes(message, 'utf-8'))
 
 
@@ -48,6 +43,9 @@ while True:
         response = input("> ")
         while not response:
             print("Blank entries are invalid, try again.")
+            response = input("> ")
+        while len(response) > 1000:
+            print("Too large an input, try again.")
             response = input("> ")
         send_message(c_sock, response)
 
