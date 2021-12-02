@@ -17,8 +17,8 @@ class SudokuGame:
         self._boxes = {}
         self._candidates = {}
         self.populate()
-        self.create_puzzle()
-
+        while not self.create_puzzle():
+            self.populate()
 
     def populate(self):
         """
@@ -87,10 +87,7 @@ class SudokuGame:
                 print("Valid puzzle created!!")  # for debug
                 self.print_board()
                 return True
-            else:
-                print("Puzzle invalid, try again.")  # for debug
-                self._grid = grid
-                self.print_board()
+            else:  # if invalid puzzle is created
                 return False
         cell = self.get_cell_from_index(index)
         possibles = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -109,7 +106,7 @@ class SudokuGame:
                     self._columns[cell[0]].append(num)
                 possibles.remove(num)
 
-        self.create_puzzle(grid, index + 1)
+        return self.create_puzzle(grid, index + 1)
 
     def get_cell_from_index(self, index: int) -> str:
         """
@@ -132,31 +129,6 @@ class SudokuGame:
         for key in self._boxes:
             if cell in self._boxes[key]:
                 return key
-
-    def fewest_candidates(self):
-        """
-        Returns cell with fewest candidates.
-        If more than one fits this description, a random one is returned.
-        If there are no cells with possible candidates, returns None.
-        """
-        min_list = []
-        min_cells = []
-        cell = None
-        for key in self._candidates:
-            min_list.append(len(self._candidates[key]))
-        min_candidates = min(min_list)
-        for key in self._candidates:
-            if self._candidates[key] == min_candidates:
-                min_cells.append(key)
-        if len(min_cells) > 1:
-            index = random.randint(0, len(min_cells) - 1)
-            cell = min_cells[index]
-        elif len(min_cells) == 1:
-            cell = min_cells[0]
-        else:
-            print("No cells left.")
-            return None
-        return cell
 
     def is_valid(self, grid):
         """Detects if current sudoku grid is valid"""
@@ -185,11 +157,6 @@ class SudokuGame:
 
         return True  # if there are no repeating #'s in row, column or box
 
-
-
-
-
-
     def print_board(self):
         count = 1
         rows = ""
@@ -200,27 +167,7 @@ class SudokuGame:
             count += 1
         print(rows)
 
-    def print_blank_board(self):
-        count = 1
-        rows = ""
-        for key in self._grid:
-            rows += key + " "
-            if count % 9 == 0:
-                rows += "\n"
-            count += 1
-        print(rows)
-
-    def print_solution(self):
-        count = 1
-        rows = ""
-        board_list = list(self._grid.values())
-        for value in board_list:
-            rows += value + " "
-            if count % 9 == 0:
-                rows += "\n"
-            count += 1
-        print(rows)
-
 
 game = SudokuGame()
+
 
