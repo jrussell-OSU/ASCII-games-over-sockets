@@ -1,7 +1,7 @@
 # Author: Jacob Russell
 # Date: November 30, 2021
 # Sudoku Game
-# References: Algorithms from: https://dlbeer.co.nz/articles/sudoku.html
+# References: Algorithm ideas (no actual code) from: https://dlbeer.co.nz/articles/sudoku.html
 import random
 
 
@@ -19,8 +19,8 @@ class Sudoku:
         self._permanent = []  # stores which coordinates cannot be edited
         self._messages = {
             "welcome": "Welcome to Sudoku!\n"
-                       "Please enter a coordinate and then a number to fill in each cell."
-                       "Example: A1, 7  would put a 7 in the top left cell."
+                       "Please enter a coordinate and then a number to fill in each cell.\n"
+                       "Example: A1, 7  would put a 7 in the top left cell.\n"
         }
         self.populate()
 
