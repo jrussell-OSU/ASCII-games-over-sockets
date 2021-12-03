@@ -17,6 +17,7 @@ class Sudoku:
         self._boxes = {}  # stores just coordinates of each 3x3 grid (no answer)
         self._solution = {}  # stores copy of full solution
         self._permanent = []  # stores which coordinates cannot be edited
+        self._turns = 0
         self._messages = {
             "welcome": "Welcome to Sudoku!\n"
                        "Please enter a coordinate and then a number to fill in each cell.\n"
@@ -255,6 +256,17 @@ class Sudoku:
             if i not in "ABCDEFGHIabcdefghi123456789":
                 string = string.replace(i, "")
 
+        # So the player can delete an entry they made
+        if len(string) == 2:
+            if string[0] in "ABCDEFGHIabcdefghi":
+                cell += string[0].upper()
+                cell += string[1]
+            elif string[0] in "123456789":
+                cell += string[1].upper()
+                cell += string[0]
+            answer = "delete"
+
+        # For a normal move
         if len(string) == 3:
             if string[0] in "ABCDEFGHIabcdefghi":
                 cell += string[0].upper()
@@ -268,24 +280,32 @@ class Sudoku:
 
     def process_data(self, answer: str):
         cell, answer = self.strip_string(answer)
-        if cell != "" and cell not in self._permanent:
+        if answer == "delete" and cell not in self._permanent:  # if player wants to delete an entry they made
+            self._grid[cell] = ""
+            self._turns += 1
+            return self.grid_string() + "\nNext answer?"
+        elif cell != "" and cell not in self._permanent:
             return self.grid_string() + "\nCannot edit provided answers."
         else:
             self._grid[cell] = answer
+            self._turns += 1
             return self.grid_string() + "\nNext answer?"
 
     def check_game_state(self):
         blanks = 0
         for key in self._grid:
-            if self._grid[key] == " ":
+            if self._grid[key] == "":
                 blanks += 1
-                break
 
         if blanks == 0:
             self.update_dictionaries()  # updates row, column, and 3x3 dictionaries to match game
             if self.is_valid(self._grid):
+                print("Win state")  # for debugging
                 return True, "\n\nYYOU WIN! Well done!"
             else:
-                return False, "\n\nPuzzle invalid, YOU LOSE!"
+                print("Lose state")  # for debugging
+                return True, "\n\nPuzzle invalid, YOU LOSE!"
         else:
             return False, "Game still going."
+
+
