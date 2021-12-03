@@ -22,6 +22,7 @@ class Sudoku:
             "welcome": "Welcome to Sudoku!\n"
                        "Please enter a coordinate and then a number to fill in each cell.\n"
                        "Example: A1, 7  would put a 7 in the top left cell.\n"
+                       "To delete an answer, just enter the coordinate by itself.\n"
         }
         self.populate()
 
@@ -267,7 +268,7 @@ class Sudoku:
             answer = "delete"
 
         # For a normal move
-        if len(string) == 3:
+        elif len(string) == 3:
             if string[0] in "ABCDEFGHIabcdefghi":
                 cell += string[0].upper()
                 cell += string[1]
@@ -280,11 +281,16 @@ class Sudoku:
 
     def process_data(self, answer: str):
         cell, answer = self.strip_string(answer)
-        if answer == "delete" and cell not in self._permanent:  # if player wants to delete an entry they made
+        if answer == "delete" and cell in self._permanent:  # if player wants to delete an entry they made
             self._grid[cell] = ""
             self._turns += 1
-            return self.grid_string() + "\nNext answer?"
+            #print("Deleted a cell")  # for debug
+            return self.grid_string() + "\n" + cell + " deleted. Next answer?"
+        elif answer == "delete":
+            #print("Can't delete")
+            return self.grid_string() + "\nCannot clear " + cell + ". Next answer?"
         elif cell != "" and cell not in self._permanent:
+            #print("Can't edit")
             return self.grid_string() + "\nCannot edit provided answers."
         else:
             self._grid[cell] = answer
@@ -300,12 +306,10 @@ class Sudoku:
         if blanks == 0:
             self.update_dictionaries()  # updates row, column, and 3x3 dictionaries to match game
             if self.is_valid(self._grid):
-                print("Win state")  # for debugging
+                #print("Win state")  # for debugging
                 return True, "\n\nYYOU WIN! Well done!"
             else:
-                print("Lose state")  # for debugging
+                #print("Lose state")  # for debugging
                 return True, "\n\nPuzzle invalid, YOU LOSE!"
         else:
             return False, "Game still going."
-
-
