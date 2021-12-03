@@ -135,9 +135,10 @@ class Sudoku:
         for box in self._boxes:
             cells = list(self._boxes[box])
             amount = random.randint(4, 6)
-            while amount > 0:
+            while amount > 0 and cells:
                 index = random.randint(0, len(cells) - 1)
                 cell = cells[index]
+                del cells[index]
                 self._permanent.append(cell)
                 self._grid[cell] = ""
                 amount -= 1
