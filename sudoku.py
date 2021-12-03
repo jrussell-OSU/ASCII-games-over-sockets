@@ -318,10 +318,3 @@ class Sudoku:
                 return True, "\n\nPuzzle invalid, YOU LOSE!"
         else:
             return False, "Game still going."
-
-game = Sudoku()
-print(game.grid_string())
-game.process_data("B1, 7")
-game.process_data("C1, 7")
-game.process_data("D1, 7")
-print(game.grid_string())
