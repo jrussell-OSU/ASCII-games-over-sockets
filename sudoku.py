@@ -276,7 +276,7 @@ class Sudoku:
     def check_game_state(self):
         blanks = 0
         for key in self._grid:
-            if self._grid[key] == "":
+            if self._grid[key] == " ":
                 blanks += 1
                 break
 
