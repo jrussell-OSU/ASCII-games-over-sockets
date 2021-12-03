@@ -186,6 +186,8 @@ class Sudoku:
 
             if cell == "":
                 cell = " "
+            #if cell in "123456789" and key in self._permanent:  # underline player answers
+                #cell = '\033[4m' + cell + '\033[0m'  # only works in pycharm, not windows terminal
             if count == 1:
                 rows += "   |-----------------------------|\n1: | "
             if count % 3 == 0:
@@ -282,10 +284,13 @@ class Sudoku:
     def process_data(self, answer: str):
         cell, answer = self.strip_string(answer)
         if answer == "delete" and cell in self._permanent:  # if player wants to delete an entry they made
-            self._grid[cell] = ""
-            self._turns += 1
-            #print("Deleted a cell")  # for debug
-            return self.grid_string() + "\n" + cell + " deleted. Next answer?"
+            if self._grid[cell]:
+                self._grid[cell] = ""
+                self._turns += 1
+                #print("Deleted a cell")  # for debug
+                return self.grid_string() + "\n" + cell + " cleared. Next answer?"
+            else:
+                return self.grid_string() + "\nCannot clear a blank cell. Next answer?"
         elif answer == "delete":
             #print("Can't delete")
             return self.grid_string() + "\nCannot clear " + cell + ". Next answer?"
@@ -313,3 +318,10 @@ class Sudoku:
                 return True, "\n\nPuzzle invalid, YOU LOSE!"
         else:
             return False, "Game still going."
+
+game = Sudoku()
+print(game.grid_string())
+game.process_data("B1, 7")
+game.process_data("C1, 7")
+game.process_data("D1, 7")
+print(game.grid_string())
